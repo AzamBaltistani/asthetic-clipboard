@@ -1,0 +1,113 @@
+/* GTK Named Colors Template */
+/* These colors are defined dynamically in main.rs using @define-color */
+
+/* GLOBAL RESET */
+window, popover > contents {
+    background-color: @bg_color;
+    color: @text_color;
+}
+
+window {
+    border-radius: 12px;
+}
+
+entry, spinbutton {
+    background-color: @bg_color;
+    color: @text_color;
+    border: 1px solid @border_color;
+}
+
+.header {
+    /* Transparent header */
+}
+
+.title {
+    font-size: 16px;
+    font-weight: normal;
+    color: @text_color;
+}
+
+/* Base button style */
+button {
+    background: none;
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    color: @button_text;
+    padding: 6px 10px;
+    min-height: 0;
+    min-width: 0;
+    font-weight: normal;
+    transition: background-color 0.1s, color 0.1s;
+}
+
+button:hover {
+    background-color: @hover_bg;
+    color: @hover_text;
+    border-radius: 4px;
+}
+
+button:active, button:focus, button:checked {
+    background-color: @hover_bg;
+    color: @hover_text;
+}
+
+.destructive-action {
+    color: @destructive;
+}
+
+.destructive-action:hover {
+    color: @destructive_hover;
+    background-color: @hover_bg;
+}
+
+.pinned {
+    color: @pinned;
+}
+
+/* List Styling */
+list {
+    background-color: transparent;
+}
+
+row {
+    padding: 8px 12px;
+    border-bottom: 1px solid @border_color;
+    transition: background-color 0.2s;
+    color: @text_color;
+}
+
+row:hover {
+    background-color: @hover_bg;
+}
+
+.flat {
+    background: none;
+    border: none;
+    box-shadow: none;
+    padding: 6px;
+}
+
+.flat:hover {
+    background-color: @hover_bg;
+}
+
+.menu-button {
+    margin-bottom: 4px;
+    color: @text_color;
+}
+
+separator {
+    color: @separator;
+    background-color: @separator;
+    min-height: 1px;
+    border: none;
+}
+
+popover > contents {
+    background-color: @popover_bg;
+    color: @text_color;
+    border: 1px solid @popover_border;
+    border-radius: 8px;
+    padding: 8px;
+}
