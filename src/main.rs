@@ -31,79 +31,24 @@ fn build_ui(app: &Application) {
         .title("Asthetic Clipboard")
         .default_width(400)
         .default_height(600)
-        .decorated(false) // Frameless 
+        // .decorated(false) // Custom header bar provides decoration
         .modal(true)
         .build();
 
-    // State for tracking open menus to prevent window close on interaction
+    // Data Dependencies (Initialize Early)
     let menu_counter = Rc::new(RefCell::new(0));
-
-    // Close on blur (click outside) - with debounce to handle popover focus switching
-    let win_weak = window.downgrade();
-    let menu_counter_blur = menu_counter.clone();
-    window.connect_is_active_notify(move |win| {
-        let is_active = win.is_active();
-        
-        if !is_active {
-            let win_weak_inner = win_weak.clone();
-            let menu_counter_inner = menu_counter_blur.clone();
-            
-            // Wait slightly to see if focus was just transferred to our own popover
-            // Increased to 300ms to handle sluggish focus transfers
-            glib::timeout_add_local_once(std::time::Duration::from_millis(300), move || {
-                if let Some(w) = win_weak_inner.upgrade() {
-                    let open_menus = *menu_counter_inner.borrow();
-                    
-                    // Just check if we are still inactive AND no menus are open
-                    if !w.is_active() && open_menus == 0 {
-                        w.close();
-                    }
-                }
-            });
-        }
-    });
-
-    // Load data
     let storage = Rc::new(RefCell::new(ClipboardStorage::load().unwrap_or_default()));
     let config = Rc::new(RefCell::new(AppConfig::load().unwrap_or_default()));
-
-    let vbox = gtk4::Box::new(Orientation::Vertical, 5);
-    window.set_child(Some(&vbox));
-
-    // ListBox (Create first so we can refer to it in Settings)
     let list_box = Rc::new(ListBox::new());
     list_box.add_css_class("content-list");
     list_box.set_selection_mode(gtk4::SelectionMode::None);
 
-    // Header
-    // Header
-    let header_box = gtk4::Box::new(Orientation::Horizontal, 0);
-    header_box.add_css_class("header");
-    header_box.set_hexpand(true); // Fix layout
-    header_box.set_margin_top(10);
-    header_box.set_margin_bottom(10);
-    header_box.set_margin_start(10);
-    header_box.set_margin_end(10);
-
-    // Drag handle logic: We want the whole header to be draggable, but the buttons to be clickable.
-    // WindowHandle is good.
-    let window_handle = gtk4::WindowHandle::new();
-    window_handle.set_hexpand(true); // Fix layout
-    
-    // Inner box for layout inside handle
-    let header_content = gtk4::Box::new(Orientation::Horizontal, 10);
-    header_content.set_hexpand(true);
-    
-    let title_label = Label::new(Some("Clipboard History"));
-    title_label.set_hexpand(true);
-    title_label.set_halign(Align::Start); // Left align
-    header_content.append(&title_label);
-
+    // --- Settings Logic (Moved Up) ---
     // Settings Button
     let settings_btn = gtk4::MenuButton::new();
     settings_btn.set_icon_name("emblem-system-symbolic"); // Gear icon usually
     settings_btn.add_css_class("flat");
-    settings_btn.set_halign(Align::End);
+    settings_btn.set_halign(Align::End); // Inside header, alignment might matter less if packed
 
     // Settings Menu Popover
     let settings_popover = gtk4::Popover::new();
@@ -126,8 +71,6 @@ fn build_ui(app: &Application) {
     settings_box.set_margin_end(10);
 
     // 1. Theme Toggle
-    let theme_box = gtk4::Box::new(Orientation::Vertical, 5); // Changed to vertical for cleaner layout or keep horizontal?
-    // Keep consistent
     let theme_box = gtk4::Box::new(Orientation::Horizontal, 10);
     let theme_label = Label::new(Some("Dark Mode"));
     let theme_switch = gtk4::Switch::new();
@@ -211,12 +154,48 @@ fn build_ui(app: &Application) {
     settings_popover.set_child(Some(&settings_box));
     settings_btn.set_popover(Some(&settings_popover));
 
-    header_content.append(&settings_btn);
-    window_handle.set_child(Some(&header_content));
-    header_box.append(&window_handle);
-    vbox.append(&header_box); // Add header
+    // --- Header Implementation ---
+    // Custom Header Bar (CSD)
+    let header_bar = gtk4::HeaderBar::new();
+    header_bar.set_show_title_buttons(true);
+    // Layout: "close" means ONLY show the close button at the end (right side usually) from content
+    header_bar.set_decoration_layout(Some(":close")); 
 
-    // Scrolled Window for List
+    // Add Settings Button to Header (Left)
+    header_bar.pack_start(&settings_btn);
+
+    window.set_titlebar(Some(&header_bar));
+
+    // --- Window Logic ---
+    // Close on blur (click outside) - with debounce to handle popover focus switching
+    let win_weak = window.downgrade();
+    let menu_counter_blur = menu_counter.clone();
+    window.connect_is_active_notify(move |win| {
+        let is_active = win.is_active();
+        
+        if !is_active {
+            let win_weak_inner = win_weak.clone();
+            let menu_counter_inner = menu_counter_blur.clone();
+            
+            // Wait slightly to see if focus was just transferred to our own popover
+            // Increased to 300ms to handle sluggish focus transfers
+            glib::timeout_add_local_once(std::time::Duration::from_millis(300), move || {
+                if let Some(w) = win_weak_inner.upgrade() {
+                    let open_menus = *menu_counter_inner.borrow();
+                    
+                    // Just check if we are still inactive AND no menus are open
+                    if !w.is_active() && open_menus == 0 {
+                        w.close();
+                    }
+                }
+            });
+        }
+    });
+
+    let vbox = gtk4::Box::new(Orientation::Vertical, 5);
+    window.set_child(Some(&vbox));
+
+    // Scrolled Window for List (using list_box created earlier)
     let scrolled_window = ScrolledWindow::builder()
         .hscrollbar_policy(PolicyType::Never)
         .min_content_height(400)
@@ -224,6 +203,8 @@ fn build_ui(app: &Application) {
         .build();
     vbox.append(&scrolled_window);
     scrolled_window.set_child(Some(list_box.as_ref()));
+
+    // Footer Removed!
 
     refresh_list(&list_box, &storage.borrow(), &window, storage.clone(), menu_counter.clone());
 
@@ -254,6 +235,15 @@ fn refresh_list(
         hbox.set_margin_bottom(5);
         hbox.set_margin_start(5);
         hbox.set_margin_end(5);
+
+        // Pin Icon (if pinned)
+        if item.pinned {
+            let pin_icon = gtk4::Image::from_icon_name("emblem-favorite-symbolic");
+            pin_icon.add_css_class("pinned");
+            pin_icon.set_pixel_size(16); // Small icon
+            pin_icon.set_valign(Align::Center);
+            hbox.append(&pin_icon);
+        }
 
         // Content Area (Clickable)
         let content_box = gtk4::Box::new(Orientation::Horizontal, 0);

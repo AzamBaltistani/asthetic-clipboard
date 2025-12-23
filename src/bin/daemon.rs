@@ -3,7 +3,7 @@ use arboard::Clipboard;
 use std::{thread, time::Duration};
 use anyhow::Result;
 use sha2::{Digest, Sha256};
-use std::borrow::Cow;
+// use std::borrow::Cow;
 // use hex; // Implicit via format!
 
 // Helper to load with retry

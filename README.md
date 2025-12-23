@@ -5,7 +5,7 @@ A simple, fast, and persistent clipboard manager written in Rust.
 ## Features
 - **Persistent History**: Saves your clipboard history to `~/.local/share/asthetic/clipboard/history.json`.
 - **Pinning**: Press `p` to pin items so they don't get deleted when history is full.
-- **TUI Interface**: Easy to use terminal interface.
+- **TUI Interface**: Easy to use terminal interface (optional).
 - **Wayland Support**: Designed to work on generic Linux setups (requires manual keybind).
 - **Daemon**: Background process to monitor clipboard changes.
 
@@ -25,7 +25,8 @@ A simple, fast, and persistent clipboard manager written in Rust.
    ```
 2. Binaries will be in `target/release/`.
    - `daemon`: The background monitor.
-   - `asthetic-clipboard`: The TUI client.
+   - `asthetic-clipboard`: The main GUI client (GTK4).
+   - `tui`: The terminal interface client.
 
 ## Usage
 
@@ -42,7 +43,13 @@ Run the client to view and select items.
 ./target/release/asthetic-clipboard
 ```
 
-### 3. Keybindings (TUI)
+### 3. Open the TUI (Optional)
+If you prefer the terminal interface:
+```bash
+./target/release/tui
+```
+
+### 4. Keybindings (TUI)
 - **Up / Down / j / k**: Navigate list.
 - **Enter**: Copy selected item to clipboard and exit.
 - **p**: Pin/Unpin selected item.
@@ -53,4 +60,4 @@ Run the client to view and select items.
 ## Wayland Setup (Win+V)
 To trigger this with `Win+V`, you must configure your Desktop Environment specifically.
 - **GNOME**: Settings -> Keyboard -> View and Customize Shortcuts -> Custom Shortcuts. Add `Win+V` to run `/path/to/asthetic-clipboard`. (Note: you might need a terminal wrapper like `gnome-terminal -- /path/to/exe`).
-- **Hyprland**: Add `bind = SUPER, V, exec, kitty --class clipui -e /path/to/asthetic-clipboard`.
+- **Hyprland**: Add `bind = SUPER, V, exec, /path/to/asthetic-clipboard`.

@@ -21,6 +21,18 @@ entry, spinbutton {
     /* Transparent header */
 }
 
+headerbar {
+    background-color: @bg_color;
+    color: @text_color;
+    border: none;
+    border-bottom: 1px solid @border_color;
+    box-shadow: none;
+}
+
+headerbar .title {
+    color: @text_color;
+}
+
 .title {
     font-size: 16px;
     font-weight: normal;

@@ -122,7 +122,7 @@ impl ClipboardStorage {
         // Limit history size
         if self.history.len() > max_history {
             // Keep pinned items, remove oldest unpinned
-            let mut pinned: Vec<HistoryItem> = self.history.iter().filter(|i| i.pinned).cloned().collect();
+            let pinned: Vec<HistoryItem> = self.history.iter().filter(|i| i.pinned).cloned().collect();
             let mut unpinned: Vec<HistoryItem> = self.history.iter().filter(|i| !i.pinned).cloned().collect();
             
             // Trim unpinned
@@ -158,7 +158,7 @@ impl ClipboardStorage {
              // Simplest way: iterate original, keep if pinned OR if it is in the allowed unpinned set.
              // But 'unpinned' vec contains the ones we want to keep.
              
-            let unpinned_hashes: std::collections::HashSet<String> = unpinned.iter().map(|i| i.content.clone() /* content is unique-ish for text, but images? hash? */).collect();
+            let _unpinned_hashes: std::collections::HashSet<String> = unpinned.iter().map(|i| i.content.clone() /* content is unique-ish for text, but images? hash? */).collect();
             // Wait, this is getting complex.
             // Let's stick to previous logic but parameterized.
             

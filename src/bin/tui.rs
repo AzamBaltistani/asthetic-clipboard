@@ -1,6 +1,6 @@
-use asthetic_clipboard::{ClipboardStorage, HistoryItem};
+use asthetic_clipboard::ClipboardStorage;
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyModifiers},
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -14,7 +14,7 @@ use ratatui::{
 };
 use std::{error::Error, io};
 use arboard::Clipboard;
-use chrono::{DateTime, Local};
+// use chrono::{DateTime, Local};
 
 struct App {
     storage: ClipboardStorage,
@@ -141,7 +141,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<(
                 KeyCode::Down | KeyCode::Char('j') => app.next(),
                 KeyCode::Up | KeyCode::Char('k') => app.previous(),
                 KeyCode::Enter => {
-                    if let Err(e) = app.copy_selected() {
+                    if let Err(_e) = app.copy_selected() {
                         // In TUI, maybe show error? For now print to stderr or ignore
                     }
                     return Ok(());
@@ -172,7 +172,7 @@ fn ui(f: &mut Frame, app: &mut App) {
             let pinned = if i.pinned { " [PIN]" } else { "" };
             // Format duration roughly? For now just raw time or simplified.
             let time = i.timestamp.format("%H:%M");
-            let line = format!("{} {}{}", time, content, pinned);
+            let _line = format!("{} {}{}", time, content, pinned);
             let style = if i.pinned {
                  Style::default().fg(Color::Yellow)
             } else {
