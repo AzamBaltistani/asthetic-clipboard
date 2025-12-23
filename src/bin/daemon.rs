@@ -6,20 +6,60 @@ use sha2::{Digest, Sha256};
 // use std::borrow::Cow;
 // use hex; // Implicit via format!
 
-// Helper to load with retry
+// Helper to load with retry (with exponential backoff)
 fn load_storage_with_retry() -> ClipboardStorage {
     let mut attempts = 0;
+    let max_attempts = 5;
+    
     loop {
         match ClipboardStorage::load() {
             Ok(s) => return s,
             Err(e) => {
                 attempts += 1;
-                eprintln!("Error loading storage (attempt {}): {}", attempts, e);
-                if attempts >= 3 {
-                    eprintln!("Giving up loading storage. Returning default (THIS WILL WIPE HISTORY).");
+                
+                // Only log if it's not a lock contention issue
+                let err_msg = e.to_string();
+                if !err_msg.contains("Failed to acquire") {
+                    eprintln!("Error loading storage (attempt {}): {}", attempts, e);
+                }
+                
+                if attempts >= max_attempts {
+                    eprintln!("Failed to load storage after {} attempts. Returning default.", max_attempts);
                     return ClipboardStorage::default();
                 }
-                thread::sleep(Duration::from_millis(100));
+                
+                // Exponential backoff: 50ms, 100ms, 200ms, 400ms, 800ms
+                let delay_ms = 50 * (1 << (attempts - 1));
+                thread::sleep(Duration::from_millis(delay_ms));
+            }
+        }
+    }
+}
+
+// Helper to save with retry (with exponential backoff)
+fn save_storage_with_retry(storage: &ClipboardStorage) -> Result<()> {
+    let mut attempts = 0;
+    let max_attempts = 5;
+    
+    loop {
+        match storage.save() {
+            Ok(()) => return Ok(()),
+            Err(e) => {
+                attempts += 1;
+                
+                // Only log if it's not a lock contention issue
+                let err_msg = e.to_string();
+                if !err_msg.contains("Failed to acquire") {
+                    eprintln!("Error saving storage (attempt {}): {}", attempts, e);
+                }
+                
+                if attempts >= max_attempts {
+                    return Err(e);
+                }
+                
+                // Exponential backoff: 50ms, 100ms, 200ms, 400ms, 800ms
+                let delay_ms = 50 * (1 << (attempts - 1));
+                thread::sleep(Duration::from_millis(delay_ms));
             }
         }
     }
@@ -44,8 +84,8 @@ fn main() -> Result<()> {
                     let mut storage = load_storage_with_retry();
                     let config = AppConfig::load().unwrap_or_default();
                     storage.add(content.clone(), "text".to_string(), None, config.max_history);
-                    if let Err(e) = storage.save() {
-                        eprintln!("Failed to save history: {}", e);
+                    if let Err(e) = save_storage_with_retry(&storage) {
+                        eprintln!("Failed to save history after retries: {}", e);
                     }
                     last_text_content = content;
                     last_image_hash.clear(); 
@@ -91,8 +131,8 @@ fn main() -> Result<()> {
                                  Some(hash.clone()),
                                  config.max_history
                              );
-                             if let Err(e) = storage.save() {
-                                 eprintln!("Failed to save history: {}", e);
+                             if let Err(e) = save_storage_with_retry(&storage) {
+                                 eprintln!("Failed to save history after retries: {}", e);
                              }
                          }
                      }

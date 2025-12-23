@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
-use std::fs;
+use std::fs::{self, OpenOptions};
 use std::path::PathBuf;
+use std::io::{Read, Write};
 use chrono::{DateTime, Local};
 use anyhow::{Result, Context};
 use directories::ProjectDirs;
+use fs2::FileExt;
 
 // Defaults
 const DEFAULT_MAX_HISTORY: usize = 50;
@@ -75,9 +77,32 @@ impl ClipboardStorage {
         if !path.exists() {
             return Ok(Self::default());
         }
-        let content = fs::read_to_string(path)?;
+        
+        // Open file with shared lock for reading
+        let file = OpenOptions::new()
+            .read(true)
+            .open(&path)
+            .context("Failed to open storage file")?;
+        
+        // Acquire shared lock (allows multiple readers)
+        file.lock_shared()
+            .context("Failed to acquire shared lock on storage file")?;
+        
+        let mut content = String::new();
+        let mut file_reader = file;
+        file_reader.read_to_string(&mut content)
+            .context("Failed to read storage file")?;
+        
+        // Lock is automatically released when file goes out of scope
+        
+        // Handle empty file gracefully
+        if content.trim().is_empty() {
+            return Ok(Self::default());
+        }
+        
         // Use from_str directly to propagate deserialization errors
-        let storage = serde_json::from_str(&content)?;
+        let storage = serde_json::from_str(&content)
+            .context("Failed to parse storage JSON")?;
         Ok(storage)
     }
 
@@ -86,8 +111,41 @@ impl ClipboardStorage {
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;
         }
-        let content = serde_json::to_string_pretty(self)?;
-        fs::write(path, content)?;
+        
+        // Serialize first (before acquiring lock)
+        let content = serde_json::to_string_pretty(self)
+            .context("Failed to serialize storage")?;
+        
+        // Write to temporary file first (atomic operation)
+        let temp_path = path.with_extension("json.tmp");
+        
+        // Create/open file with exclusive lock for writing
+        let file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&temp_path)
+            .context("Failed to create temporary storage file")?;
+        
+        // Acquire exclusive lock
+        file.lock_exclusive()
+            .context("Failed to acquire exclusive lock on storage file")?;
+        
+        let mut file_writer = file;
+        file_writer.write_all(content.as_bytes())
+            .context("Failed to write to temporary storage file")?;
+        
+        // Ensure data is flushed to disk
+        file_writer.sync_all()
+            .context("Failed to sync temporary storage file")?;
+        
+        // Lock is automatically released when file goes out of scope
+        drop(file_writer);
+        
+        // Atomic rename (this is atomic on most filesystems)
+        fs::rename(&temp_path, &path)
+            .context("Failed to rename temporary storage file")?;
+        
         Ok(())
     }
 

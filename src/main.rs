@@ -245,12 +245,12 @@ fn refresh_list(
             hbox.append(&pin_icon);
         }
 
-        // Content Area (Clickable)
+        // Content Area
         let content_box = gtk4::Box::new(Orientation::Horizontal, 0);
         content_box.set_hexpand(true);
         
-        let _item_content = item.content.clone();
-        let _item_kind = item.kind.clone();
+        let item_content = item.content.clone();
+        let item_kind = item.kind.clone();
         
         if item.kind == "image" {
              // Render Image
@@ -259,38 +259,6 @@ fn refresh_list(
              picture.set_height_request(100); // Thumbnail size
              picture.set_halign(Align::Start);
              content_box.append(&picture);
-
-             // Click Controller for Image
-             let gesture = gtk4::GestureClick::new();
-             let window_clone = window.clone();
-             let item_content_copy = item.content.clone();
-             gesture.connect_pressed(move |_, _, _, _| {
-                 println!("Copying image item");
-                 use std::process::{Command, Stdio};
-                 
-                 // Copy Image
-                 let child = Command::new("wl-copy")
-                    .arg("--type").arg("image/png")
-                    .stdin(Stdio::from(std::fs::File::open(&item_content_copy).expect("Failed to open image file")))
-                    .spawn();
-                 
-                 match child {
-                     Ok(mut child) => {
-                         let _ = child.wait();
-                     }
-                     Err(_) => {
-                         // Fallback to xclip
-                          let _ = Command::new("xclip")
-                            .arg("-selection").arg("clipboard")
-                            .arg("-t").arg("image/png")
-                            .arg("-i").arg(&item_content_copy)
-                            .spawn()
-                            .and_then(|mut c| c.wait());
-                     }
-                 }
-                 window_clone.close();
-             });
-             content_box.add_controller(gesture);
         } else {
              // Render Text with "Show More" logic
              let display_content = item.content.trim();
@@ -305,7 +273,7 @@ fn refresh_list(
              let content_vbox = gtk4::Box::new(Orientation::Vertical, 5);
              content_vbox.set_hexpand(true);
 
-             // 1. Clickable Text Area
+             // Text Area
              let text_event_box = gtk4::Box::new(Orientation::Horizontal, 0);
              text_event_box.set_hexpand(true);
              
@@ -320,7 +288,7 @@ fn refresh_list(
              
              content_vbox.append(&text_event_box);
 
-             // 2. Show More Button (OUTSIDE the clickable text area)
+             // Show More Button (if long text)
              if is_long {
                  let show_more_btn = Button::with_label("Show Content");
                  show_more_btn.add_css_class("flat"); 
@@ -334,66 +302,14 @@ fn refresh_list(
                      label_clone.set_text(&full_text);
                      label_clone.set_lines(-1); 
                      btn_clone.set_visible(false);
-                     // Do NOT close window obviously
                  });
                  content_vbox.append(&show_more_btn);
              }
              
-             // Append the whole vbox to the main row box
              content_box.append(&content_vbox);
-
-             // Click Controller for Copy - ATTACH ONLY TO text_event_box
-             let gesture = gtk4::GestureClick::new();
-             let window_clone = window.clone();
-             let item_content_copy = item.content.clone(); 
-             gesture.connect_pressed(move |_, _, _, _| {
-                 println!("Copying text item");
-                 // ... Copy logic ...
-                 // Duplicate copy logic here or refactor? 
-                 // Since we moved the controller, we need the logic here.
-                 // Ideally we'd reuse the logic block.
-                 // Let's call a shared closure or just paste logic for now to be safe.
-                 
-                 use std::process::{Command, Stdio};
-                 use std::io::Write;
-                 
-                  // Copy Text
-                 let child = Command::new("wl-copy")
-                    .stdin(Stdio::piped())
-                    .spawn();
-                 
-                 match child {
-                     Ok(mut child) => {
-                         if let Some(mut stdin) = child.stdin.take() {
-                             let _ = stdin.write_all(item_content_copy.as_bytes());
-                         }
-                         let _ = child.wait();
-                     }
-                     Err(_) => {
-                          let child = Command::new("xclip")
-                            .arg("-selection")
-                            .arg("clipboard")
-                            .stdin(Stdio::piped())
-                            .spawn();
-                          match child {
-                              Ok(mut child) => {
-                                 if let Some(mut stdin) = child.stdin.take() {
-                                     let _ = stdin.write_all(item_content_copy.as_bytes());
-                                 }
-                                 let _ = child.wait();
-                              }
-                              Err(_) => {}
-                          }
-                     }
-                 }
-                 window_clone.close();
-             });
-             text_event_box.add_controller(gesture);
-             
-             // Important: We need to NOT add the gesture to content_box below.
-             // The loop structure in original code added it to content_box at the end.
-             // We need to change that flow.
         }
+
+        // Add click handler to entire hbox (will be added after menu button)
 
         // Menu Button
         let menu_btn = gtk4::MenuButton::new();
@@ -526,6 +442,79 @@ fn refresh_list(
 
         popover.set_child(Some(&menu_box));
         menu_btn.set_popover(Some(&popover));
+
+
+        // Add click gesture to content_box (not hbox) to exclude menu button
+        let gesture = gtk4::GestureClick::new();
+        let window_clone = window.clone();
+        let item_content_for_copy = item_content.clone();
+        let item_kind_for_copy = item_kind.clone();
+        
+        gesture.connect_pressed(move |_, _, _, _| {
+            use std::process::{Command, Stdio};
+            use std::io::Write;
+            
+            if item_kind_for_copy == "image" {
+                println!("Copying image item");
+                
+                // Copy Image
+                let child = Command::new("wl-copy")
+                   .arg("--type").arg("image/png")
+                   .stdin(Stdio::from(std::fs::File::open(&item_content_for_copy).expect("Failed to open image file")))
+                   .spawn();
+                
+                match child {
+                    Ok(mut child) => {
+                        let _ = child.wait();
+                    }
+                    Err(_) => {
+                        // Fallback to xclip
+                         let _ = Command::new("xclip")
+                           .arg("-selection").arg("clipboard")
+                           .arg("-t").arg("image/png")
+                           .arg("-i").arg(&item_content_for_copy)
+                           .spawn()
+                           .and_then(|mut c| c.wait());
+                    }
+                }
+            } else {
+                println!("Copying text item");
+                
+                // Copy Text
+                let child = Command::new("wl-copy")
+                   .stdin(Stdio::piped())
+                   .spawn();
+                
+                match child {
+                    Ok(mut child) => {
+                        if let Some(mut stdin) = child.stdin.take() {
+                            let _ = stdin.write_all(item_content_for_copy.as_bytes());
+                        }
+                        let _ = child.wait();
+                    }
+                    Err(_) => {
+                         let child = Command::new("xclip")
+                           .arg("-selection")
+                           .arg("clipboard")
+                           .stdin(Stdio::piped())
+                           .spawn();
+                         match child {
+                             Ok(mut child) => {
+                                if let Some(mut stdin) = child.stdin.take() {
+                                    let _ = stdin.write_all(item_content_for_copy.as_bytes());
+                                }
+                                let _ = child.wait();
+                             }
+                             Err(_) => {}
+                         }
+                    }
+                }
+            }
+            
+            window_clone.close();
+        });
+        
+        content_box.add_controller(gesture);
 
         hbox.append(&content_box);
         hbox.append(&menu_btn);
