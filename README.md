@@ -4,101 +4,80 @@ A simple, fast, and persistent clipboard manager written in Rust.
 
 ## Features
 - **Persistent History**: Saves your clipboard history to `~/.local/share/asthetic/clipboard/history.json`.
-- **Pinning**: Press `p` to pin items so they don't get deleted when history is full.
-- **TUI Interface**: Easy to use terminal interface (optional).
-- **Wayland Support**: Designed to work on generic Linux setups (requires manual keybind).
-- **Daemon**: Background process to monitor clipboard changes.
-
-## Requirements
-
-**For Building from Source:**
-- **Linux** (Wayland or X11)
-- **Rust Toolchain**
-- **System Dependencies**:
-  - `wl-clipboard` (for Wayland) OR `xclip` (for X11)
-  - GTK4 development libraries (`libgtk-4-dev`)
-
-**For AppImage (Recommended for Users):**
-- Just a Linux distribution (most distros supported)
-- No additional dependencies needed!
+- **Smart Timestamp**: Shows when an item was *originally* copied. Reusing an item keeps its original time.
+- **Pinning**: Press `Pin` in the menu to keep important items (they won't be deleted when history is full).
+- **Image Support**: Copy and paste images directly.
+- **Background Daemon**: Automatically starts on login (via systemd).
+- **Theme Support**: Light & Dark mode.
 
 ## Installation
 
-### Option 1: AppImage (Recommended for Users)
+### From Source (Recommended)
 
-1. **Download** the AppImage from the [Releases](../../releases) page
-2. **Make it executable**:
+1. **Clone the repository**:
    ```bash
-   chmod +x Asthetic_Clipboard_Manager-x86_64.AppImage
-   ```
-3. **Run it**:
-   ```bash
-   ./Asthetic_Clipboard_Manager-x86_64.AppImage
+   git clone https://github.com/AzamBaltistani/asthetic-clipboard.git
+   cd asthetic-clipboard
    ```
 
-That's it! The AppImage includes all dependencies (including GTK4) and works on most Linux distributions.
-
-### Option 2: Build from Source
-
-1. Build the project:
+2. **Run the installation script**:
    ```bash
-   cargo build --release
+   ./install.sh
    ```
-2. Binaries will be in `target/release/`.
-   - `daemon`: The background monitor.
-   - `asthetic-clipboard`: The main GUI client (GTK4).
-   - `tui`: The terminal interface client.
+   This will:
+   - Build the project (requires Rust).
+   - Install binaries to `~/.local/bin`.
+   - Install the desktop icon.
+   - **Automatically set up and start the background daemon**.
 
 ## Usage
 
-### AppImage Usage
+### 1. Bind a Shortcut (Important!)
+Since this is a clipboard manager, you should bind a global shortcut to open it easily.
 
-**1. Start the Daemon (Background Monitor)**
+- **Command**: `asthetic-clipboard`
+- **Recommended Shortcut**: `Super+V` or `Ctrl+Alt+V`
+
+**To set this up**:
+- **GNOME**: Settings -> Keyboard -> "View and Customize Shortcuts" -> "Custom Shortcuts" -> Add (+).
+- **Hyprland**: Add `bind = SUPER, V, exec, asthetic-clipboard` to your config.
+
+### 2. Basic Usage
+- **Copy**: Just copy text or images as usual (Ctrl+C).
+- **Open**: Press your shortcut (or run `asthetic-clipboard`).
+- **Paste**: Click an item to copy it back to your clipboard.
+- **Menu**: Click the `⋮` button on an item to Pin, Delete, or Save Image.
+
+### 3. Terminal Interface (TUI)
+If you prefer the terminal:
 ```bash
-./Asthetic_Clipboard_Manager-x86_64.AppImage --daemon &
+asthetic-clipboard-tui
 ```
-Add this to your startup applications for automatic monitoring.
+- **Navigation**: Arrow keys / j, k
+- **Select**: Enter
+- **Pin**: p
+- **Delete**: d
+- **Quit**: q / Esc
 
-**2. Open the GUI**
+## Troubleshooting
+
+**Daemon not running?**
+The installation script sets up a systemd service. Check its status:
 ```bash
-./Asthetic_Clipboard_Manager-x86_64.AppImage
+systemctl --user status asthetic-clipboard.service
 ```
-
-**3. Open the TUI (Optional)**
+If it's not running, try restarting it:
 ```bash
-./Asthetic_Clipboard_Manager-x86_64.AppImage --tui
+systemctl --user restart asthetic-clipboard.service
 ```
 
-### Building from Source Usage
-
-### 1. Start the Daemon
-Run the daemon in the background to start recording clipboard history.
+## Uninstallation
+To remove everything:
 ```bash
-./target/release/daemon &
+systemctl --user stop asthetic-clipboard.service
+systemctl --user disable asthetic-clipboard.service
+rm ~/.config/systemd/user/asthetic-clipboard.service
+rm ~/.local/bin/asthetic-clipboard*
+rm ~/.local/share/applications/asthetic-clipboard.desktop
+rm ~/.local/share/icons/hicolor/scalable/apps/asthetic-clipboard.svg
 ```
-(You should add this to your startup scripts).
-
-### 2. Open the UI
-Run the client to view and select items.
-```bash
-./target/release/asthetic-clipboard
-```
-
-### 3. Open the TUI (Optional)
-If you prefer the terminal interface:
-```bash
-./target/release/tui
-```
-
-### 4. Keybindings (TUI)
-- **Up / Down / j / k**: Navigate list.
-- **Enter**: Copy selected item to clipboard and exit.
-- **p**: Pin/Unpin selected item.
-- **d**: Delete selected item.
-- **c**: Clear all unpinned items.
-- **Esc / q**: Quit.
-
-## Wayland Setup (Win+V)
-To trigger this with `Win+V`, you must configure your Desktop Environment specifically.
-- **GNOME**: Settings -> Keyboard -> View and Customize Shortcuts -> Custom Shortcuts. Add `Win+V` to run `/path/to/asthetic-clipboard`. (Note: you might need a terminal wrapper like `gnome-terminal -- /path/to/exe`).
-- **Hyprland**: Add `bind = SUPER, V, exec, /path/to/asthetic-clipboard`.

@@ -77,6 +77,11 @@ button:active, button:focus, button:checked {
     color: @pinned;
 }
 
+.timestamp {
+    color: @button_text;
+    font-size: 0.85em;
+    opacity: 0.7;
+}
 /* List Styling */
 list {
     background-color: transparent;

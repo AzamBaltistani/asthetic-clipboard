@@ -516,7 +516,14 @@ fn refresh_list(
         
         content_box.add_controller(gesture);
 
+        let time_str = item.timestamp.format("%H:%M").to_string();
+        let time_label = Label::new(Some(&time_str));
+        time_label.add_css_class("timestamp");
+        time_label.set_valign(Align::Center);
+        time_label.set_margin_end(10); // Spacing from menu button
+
         hbox.append(&content_box);
+        hbox.append(&time_label);
         hbox.append(&menu_btn);
 
         row.set_child(Some(&hbox));

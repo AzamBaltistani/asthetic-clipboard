@@ -158,20 +158,29 @@ impl ClipboardStorage {
     }
 
     pub fn add(&mut self, content: String, kind: String, hash: Option<String>, max_history: usize) {
+        // Check if item already exists to preserve timestamp
+        let mut timestamp = Local::now();
+        
         if kind == "text" {
             // Remove existing identical item
-             self.history.retain(|item| item.content != content);
+            if let Some(pos) = self.history.iter().position(|item| item.content == content) {
+                 timestamp = self.history[pos].timestamp;
+                 self.history.remove(pos);
+            }
         } else if kind == "image" {
             // Deduplicate by hash if available
              if let Some(ref h) = hash {
-                 self.history.retain(|item| item.hash.as_ref() != Some(h));
+                 if let Some(pos) = self.history.iter().position(|item| item.hash.as_ref() == Some(h)) {
+                     timestamp = self.history[pos].timestamp;
+                     self.history.remove(pos);
+                 }
              }
         }
         
         // Add new item to front
         self.history.insert(0, HistoryItem {
             content,
-            timestamp: Local::now(),
+            timestamp,
             pinned: false,
             kind,
             hash,
