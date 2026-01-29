@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Asthetic Clipboard Manager
+GenericName=Clipboard Manager
+Comment=A beautiful and persistent clipboard manager
+Icon=asthetic-clipboard
+Exec=asthetic-clipboard
+Terminal=false
+Categories=Utility;GTK;
+Keywords=clipboard;history;manager;paste;
+StartupNotify=true
+StartupWMClass=asthetic-clipboard

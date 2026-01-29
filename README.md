@@ -11,13 +11,34 @@ A simple, fast, and persistent clipboard manager written in Rust.
 
 ## Requirements
 
+**For Building from Source:**
 - **Linux** (Wayland or X11)
 - **Rust Toolchain**
 - **System Dependencies**:
   - `wl-clipboard` (for Wayland) OR `xclip` (for X11)
   - GTK4 development libraries (`libgtk-4-dev`)
 
+**For AppImage (Recommended for Users):**
+- Just a Linux distribution (most distros supported)
+- No additional dependencies needed!
+
 ## Installation
+
+### Option 1: AppImage (Recommended for Users)
+
+1. **Download** the AppImage from the [Releases](../../releases) page
+2. **Make it executable**:
+   ```bash
+   chmod +x Asthetic_Clipboard_Manager-x86_64.AppImage
+   ```
+3. **Run it**:
+   ```bash
+   ./Asthetic_Clipboard_Manager-x86_64.AppImage
+   ```
+
+That's it! The AppImage includes all dependencies (including GTK4) and works on most Linux distributions.
+
+### Option 2: Build from Source
 
 1. Build the project:
    ```bash
@@ -29,6 +50,26 @@ A simple, fast, and persistent clipboard manager written in Rust.
    - `tui`: The terminal interface client.
 
 ## Usage
+
+### AppImage Usage
+
+**1. Start the Daemon (Background Monitor)**
+```bash
+./Asthetic_Clipboard_Manager-x86_64.AppImage --daemon &
+```
+Add this to your startup applications for automatic monitoring.
+
+**2. Open the GUI**
+```bash
+./Asthetic_Clipboard_Manager-x86_64.AppImage
+```
+
+**3. Open the TUI (Optional)**
+```bash
+./Asthetic_Clipboard_Manager-x86_64.AppImage --tui
+```
+
+### Building from Source Usage
 
 ### 1. Start the Daemon
 Run the daemon in the background to start recording clipboard history.

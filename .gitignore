@@ -1,4 +1,11 @@
 /target
 *.log
+
+# AppImage build artifacts
+AppDir/
+squashfs-root/
+*.AppImage
+linuxdeploy*.AppImage
+linuxdeploy-plugin-*.sh
 *.txt
 .DS_Store
