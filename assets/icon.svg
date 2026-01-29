@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B5CF6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Clipboard background -->
+  <rect x="48" y="32" width="160" height="200" rx="12" ry="12" fill="url(#grad1)" opacity="0.9"/>
+  
+  <!-- Clipboard clip -->
+  <rect x="88" y="16" width="80" height="32" rx="8" ry="8" fill="#6366F1"/>
+  <rect x="96" y="24" width="64" height="16" rx="4" ry="4" fill="#E0E7FF"/>
+  
+  <!-- Paper lines (aesthetic details) -->
+  <rect x="72" y="72" width="112" height="4" rx="2" fill="#FFFFFF" opacity="0.6"/>
+  <rect x="72" y="96" width="112" height="4" rx="2" fill="#FFFFFF" opacity="0.6"/>
+  <rect x="72" y="120" width="80" height="4" rx="2" fill="#FFFFFF" opacity="0.6"/>
+  
+  <!-- Checkmark (clipboard manager indicator) -->
+  <path d="M 80 160 L 100 180 L 140 140" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.8"/>
+  
+  <!-- Subtle shadow -->
+  <ellipse cx="128" cy="235" rx="80" ry="8" fill="#000000" opacity="0.15"/>
+</svg>
